@@ -1,0 +1,45 @@
+---
+# tasks file for ucs-storage
+- name: UCS Storage Configuration
+
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+      state: "{{ ucs_state }}"
+
+  block:
+  - name: Configure Storage Profiles
+    ucs_storage_profile:
+      <<: *login_info
+      name: "{{ item.name }}"
+    when: item.name is defined
+    with_items: "{{ ucs_storage_profiles }}"
+    
+  - name: Configure Disk Group Policies
+    ucs_disk_group_policy:
+      <<: *login_info
+      name: "{{ item.name }}"
+      raid_level: "{{ item.raid_level | default(omit) }}"
+    when: item.name is defined
+    with_items: "{{ ucs_disk_group_policies }}"
+
+  - name: Manually Configure Disk Groups
+    ucs_disk_group_policy_manual:
+      <<: *login_info
+      name: "{{ item.name }}"
+      disk_list: "{{ item.disk_list }}"
+    when: item.name is defined
+    with_items: "{{ ucs_manual_disk_groups }}"
+
+  - name: Configure Local LUNs
+    ucs_local_lun:
+      <<: *login_info
+      name: "{{ item.name }}"
+      size: "{{ item.size }}"
+      auto_deploy: "{{ item.auto_deploy | default(omit) }}"
+      disk_policy_name: "{{ item.disk_policy_name }}"
+      sp_name: "{{ item.sp_name }}"
+    when: item.name is defined
+    with_items: "{{ ucs_local_luns }}"
